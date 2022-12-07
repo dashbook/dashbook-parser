@@ -1,4 +1,4 @@
-use self::dashbook_parser::{Cell, DashbookParser};
+use dashbook_parser::{Cell, DashbookParser as DashbookParserTrait};
 use logos::Logos;
 use tokens::Token;
 
@@ -6,10 +6,10 @@ mod tokens;
 
 wit_bindgen_guest_rust::generate!("dashbook-parser.wit");
 
-export_dashbook_parser!(DashbookParserImpl);
-struct DashbookParserImpl;
+export_dashbook_parser!(DashbookParser);
+struct DashbookParser;
 
-impl DashbookParser for DashbookParserImpl {
+impl DashbookParserTrait for DashbookParser {
     fn parse(input: String) -> Vec<Cell> {
         let mut lexer = Token::lexer(&input);
         let mut output = Vec::new();
@@ -79,7 +79,7 @@ mod tests {
         "
         .to_owned();
 
-        let cells = DashbookParserImpl::parse(input);
+        let cells = DashbookParser::parse(input);
         match &cells[0] {
             Cell::Comment(comment) => {
                 assert_eq!(

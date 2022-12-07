@@ -1,0 +1,10 @@
+world dashbook-parser {
+  default export interface {
+    variant cell {
+        comment(string),
+        code(string)
+    }
+  
+    parse: func(input: string) -> list<cell>
+  }
+}

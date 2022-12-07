@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 logos = "0.12.1"
+wit-bindgen-guest-rust = { git = "https://github.com/bytecodealliance/wit-bindgen" }

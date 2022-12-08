@@ -1,16 +1,13 @@
-use dashbook_parser::{Cell, DashbookParser as DashbookParserTrait};
+use bindings::dashbook_parser;
 use logos::Logos;
 use tokens::Token;
 
 mod tokens;
 
-wit_bindgen_guest_rust::generate!("dashbook-parser.wit");
+struct Component;
 
-export_dashbook_parser!(DashbookParser);
-struct DashbookParser;
-
-impl DashbookParserTrait for DashbookParser {
-    fn parse(input: String) -> Vec<Cell> {
+impl dashbook_parser::DashbookParser for Component {
+    fn parse(input: String) -> Vec<dashbook_parser::Cell> {
         let mut lexer = Token::lexer(&input);
         let mut output = Vec::new();
         let mut code = String::new();
@@ -18,7 +15,7 @@ impl DashbookParserTrait for DashbookParser {
             match token {
                 Token::BeginComment => {
                     if !code.is_empty() {
-                        output.push(Cell::Code(code));
+                        output.push(dashbook_parser::Cell::Code(code));
                         code = String::new();
                     }
                     let mut comment = lexer
@@ -48,7 +45,7 @@ impl DashbookParserTrait for DashbookParser {
                             _ => (),
                         }
                     }
-                    output.push(Cell::Comment(comment))
+                    output.push(dashbook_parser::Cell::Comment(comment))
                 }
                 Token::Line => {
                     code.push_str(lexer.slice());
@@ -59,11 +56,13 @@ impl DashbookParserTrait for DashbookParser {
             }
         }
         if !code.is_empty() {
-            output.push(Cell::Code(code));
+            output.push(dashbook_parser::Cell::Code(code));
         }
         output
     }
 }
+
+bindings::export!(Component);
 
 #[cfg(test)]
 mod tests {
@@ -79,9 +78,9 @@ mod tests {
         "
         .to_owned();
 
-        let cells = DashbookParser::parse(input);
+        let cells = Component::parse(input);
         match &cells[0] {
-            Cell::Comment(comment) => {
+            dashbook_parser::Cell::Comment(comment) => {
                 assert_eq!(
                     comment,
                     "# Markdown headline\nSome cool comment\nAnother cool comment\n"
@@ -90,7 +89,7 @@ mod tests {
             _ => panic!(),
         }
         match &cells[1] {
-            Cell::Code(comment) => {
+            dashbook_parser::Cell::Code(comment) => {
                 assert_eq!(comment, "let a = 5;\na * 6\n")
             }
             _ => panic!(),

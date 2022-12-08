@@ -10,4 +10,10 @@ crate-type = ['cdylib']
 
 [dependencies]
 logos = "0.12.1"
-wit-bindgen-guest-rust = { git = "https://github.com/bytecodealliance/wit-bindgen" }
+wit-bindgen-guest-rust = { git = "https://github.com/bytecodealliance/wit-bindgen", features = ["realloc"], default_features = false }
+
+[package.metadata.component]
+direct-export = "dashbook-parser"
+
+[package.metadata.component.exports]
+dashbook-parser = "dashbook-parser.wit"

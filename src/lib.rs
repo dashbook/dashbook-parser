@@ -13,6 +13,22 @@ impl dashbook_parser::DashbookParser for Component {
         let mut code = String::new();
         while let Some(token) = lexer.next() {
             match token {
+                Token::Comment => {
+                    if !code.is_empty() {
+                        output.push(dashbook_parser::Cell::Code(code));
+                        code = String::new();
+                    }
+                    let mut comment = lexer
+                        .slice()
+                        .trim_start_matches(" ")
+                        .trim_start_matches("/*")
+                        .trim_end_matches(" ")
+                        .trim_end_matches("\n")
+                        .trim_end_matches("*/")
+                        .to_owned();
+                    comment.push_str("\n");
+                    output.push(dashbook_parser::Cell::Comment(comment))
+                }
                 Token::BeginComment => {
                     if !code.is_empty() {
                         output.push(dashbook_parser::Cell::Code(code));
@@ -64,9 +80,7 @@ impl dashbook_parser::DashbookParser for Component {
         cells
             .into_iter()
             .map(|x| match x {
-                dashbook_parser::Cell::Comment(comment) => {
-                    "/*".to_string() + &comment + "*/" + "\n"
-                }
+                dashbook_parser::Cell::Comment(comment) => "/*".to_string() + &comment + "*/",
                 dashbook_parser::Cell::Code(code) => code,
             })
             .fold(String::new(), |mut acc, x| {

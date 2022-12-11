@@ -60,6 +60,20 @@ impl dashbook_parser::DashbookParser for Component {
         }
         output
     }
+    fn generate(cells: Vec<dashbook_parser::Cell>) -> String {
+        cells
+            .into_iter()
+            .map(|x| match x {
+                dashbook_parser::Cell::Comment(comment) => {
+                    "/*".to_string() + &comment + "*/" + "\n"
+                }
+                dashbook_parser::Cell::Code(code) => code,
+            })
+            .fold(String::new(), |mut acc, x| {
+                acc.push_str(&x);
+                acc
+            })
+    }
 }
 
 bindings::export!(Component);
@@ -94,5 +108,9 @@ mod tests {
             }
             _ => panic!(),
         }
+
+        let output = Component::generate(cells);
+
+        assert_eq!(input, output)
     }
 }

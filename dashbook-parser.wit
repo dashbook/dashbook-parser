@@ -5,4 +5,5 @@ interface dashbook-parser {
   }
 
   parse: func(input: string) -> list<cell>
+  generate: func(cells: list<cell>) -> string
 }

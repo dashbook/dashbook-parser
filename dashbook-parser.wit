@@ -1,9 +1,11 @@
-interface dashbook-parser {
-  variant cell {
-    comment(string),
-    code(string)
-  }
+world dashbook-parser {
+  default export interface {
+    variant cell {
+      comment(string),
+      code(string)
+    }
 
-  parse: func(input: string) -> list<cell>
-  generate: func(cells: list<cell>) -> string
+    parse: func(input: string) -> list<cell>
+    generate: func(cells: list<cell>) -> string
+  }
 }

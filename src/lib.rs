@@ -1,9 +1,11 @@
-use bindings::dashbook_parser;
 use logos::Logos;
 use tokens::Token;
 
 mod tokens;
 
+wit_bindgen_guest_rust::generate!("dashbook-parser.wit");
+
+export_dashbook_parser!(Component);
 struct Component;
 
 impl dashbook_parser::DashbookParser for Component {
@@ -80,7 +82,9 @@ impl dashbook_parser::DashbookParser for Component {
         cells
             .into_iter()
             .map(|x| match x {
-                dashbook_parser::Cell::Comment(comment) => "/*".to_string() + &comment + "*/",
+                dashbook_parser::Cell::Comment(comment) => {
+                    "/*".to_string() + &comment.trim_end_matches("\n") + "*/" + "\n"
+                }
                 dashbook_parser::Cell::Code(code) => code,
             })
             .fold(String::new(), |mut acc, x| {
@@ -90,11 +94,12 @@ impl dashbook_parser::DashbookParser for Component {
     }
 }
 
-bindings::export!(Component);
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::{
+        dashbook_parser::{self, DashbookParser},
+        Component,
+    };
 
     #[test]
     fn test_cells() {
@@ -106,7 +111,7 @@ mod tests {
         "
         .to_owned();
 
-        let cells = Component::parse(input);
+        let cells = Component::parse(input.clone());
         match &cells[0] {
             dashbook_parser::Cell::Comment(comment) => {
                 assert_eq!(

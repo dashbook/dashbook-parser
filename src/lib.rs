@@ -103,12 +103,12 @@ mod tests {
 
     #[test]
     fn test_cells() {
-        let input = "        /*# Markdown headline
-        Some cool comment
-        Another cool comment*/
-        let a = 5;
-        a * 6
-        "
+        let input = "/*# Markdown headline
+Some cool comment
+Another cool comment*/
+let a = 5;
+a * 6
+"
         .to_owned();
 
         let cells = Component::parse(input.clone());

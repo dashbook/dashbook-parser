@@ -1,8 +1,17 @@
 world dashbook-parser {
   default export interface {
-    variant cell {
-      comment(string),
-      code(string)
+
+    record cell {
+      cell-type: cell-type,
+      size: s32,
+      source: string,
+      outputs: list<string>
+    }
+
+    variant cell-type {
+      markdown,
+      code,
+      query
     }
 
     parse: func(input: string) -> list<cell>

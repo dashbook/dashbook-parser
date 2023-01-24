@@ -3,19 +3,24 @@ use tokens::Token;
 
 mod tokens;
 
-wit_bindgen_guest_rust::generate!("dashbook-parser.wit");
+wit_bindgen_guest_rust::generate!("dashbook-parser");
 
 export_dashbook_parser!(Component);
 struct Component;
 
+#[derive(Debug)]
+enum State {
+    Comment(String),
+    Code(String),
+}
+
 impl dashbook_parser::DashbookParser for Component {
     fn parse(input: String) -> Vec<dashbook_parser::Cell> {
-        let mut lexer = Token::lexer(&input);
+        let lexer = Token::lexer(&input);
         let mut output = Vec::new();
-        let mut code = String::new();
-        while let Some(token) = lexer.next() {
-            match token {
-                Token::Comment => {
+        lexer.fold(State::Code(String::new()), |state, token| {
+            match (state, token) {
+                (State::Code(code), Token::BeginComment) => {
                     if !code.is_empty() {
                         output.push(dashbook_parser::Cell {
                             cell_type: dashbook_parser::CellType::Code,
@@ -23,84 +28,37 @@ impl dashbook_parser::DashbookParser for Component {
                             source: code,
                             outputs: Vec::new(),
                         });
-                        code = String::new();
                     }
-                    let mut comment = lexer
-                        .slice()
-                        .trim_start_matches(" ")
-                        .trim_start_matches("/*")
-                        .trim_end_matches(" ")
-                        .trim_end_matches("\n")
-                        .trim_end_matches("*/")
-                        .to_owned();
-                    comment.push_str("\n");
+                    State::Comment(String::new())
+                }
+                (State::Code(mut code), Token::NonWhitespace(content)) => {
+                    code.push_str(content);
+                    State::Code(code)
+                }
+                (State::Code(mut code), Token::Whitespace(content)) => {
+                    code.push_str(content);
+                    State::Code(code)
+                }
+                (State::Comment(comment), Token::EndComment) => {
                     output.push(dashbook_parser::Cell {
                         cell_type: dashbook_parser::CellType::Markdown,
                         size: 4,
                         source: comment,
                         outputs: Vec::new(),
-                    })
+                    });
+                    State::Code(String::new())
                 }
-                Token::BeginComment => {
-                    if !code.is_empty() {
-                        output.push(dashbook_parser::Cell {
-                            cell_type: dashbook_parser::CellType::Code,
-                            size: 4,
-                            source: code,
-                            outputs: Vec::new(),
-                        });
-                        code = String::new();
-                    }
-                    let mut comment = lexer
-                        .slice()
-                        .trim_start_matches(" ")
-                        .trim_start_matches("/*")
-                        .to_owned();
-                    comment.push_str("\n");
-                    while let Some(token) = lexer.next() {
-                        match token {
-                            Token::Line => {
-                                comment.push_str(lexer.slice());
-                                comment.push_str("\n");
-                            }
-                            Token::NewLine => comment.push_str(lexer.slice()),
-                            Token::EndComment => {
-                                comment.push_str(
-                                    lexer
-                                        .slice()
-                                        .trim_end_matches(" ")
-                                        .trim_end_matches("\n")
-                                        .trim_end_matches("*/"),
-                                );
-                                comment.push_str("\n");
-                                break;
-                            }
-                            _ => (),
-                        }
-                    }
-                    output.push(dashbook_parser::Cell {
-                        cell_type: dashbook_parser::CellType::Markdown,
-                        size: 4,
-                        source: comment,
-                        outputs: Vec::new(),
-                    })
+                (State::Comment(mut comment), Token::NonWhitespace(content)) => {
+                    comment.push_str(content);
+                    State::Comment(comment)
                 }
-                Token::Line => {
-                    code.push_str(lexer.slice());
-                    code.push_str("\n");
+                (State::Comment(mut comment), Token::Whitespace(content)) => {
+                    comment.push_str(content);
+                    State::Comment(comment)
                 }
-                Token::NewLine => code.push_str(lexer.slice()),
-                _ => (),
+                (state, _) => state,
             }
-        }
-        if !code.is_empty() {
-            output.push(dashbook_parser::Cell {
-                cell_type: dashbook_parser::CellType::Code,
-                size: 4,
-                source: code,
-                outputs: Vec::new(),
-            });
-        }
+        });
         output
     }
     fn generate(cells: Vec<dashbook_parser::Cell>) -> String {
@@ -159,62 +117,62 @@ a * 6
         assert_eq!(input, output)
     }
 
-//     #[test]
-//     fn test_comment_config() {
-//         let input = "/*%%{size: 4}%%
-// #Markdown headline*/
-// "
-//         .to_owned();
+    //     #[test]
+    //     fn test_comment_config() {
+    //         let input = "/*%%{size: 4}%%
+    // #Markdown headline*/
+    // "
+    //         .to_owned();
 
-//         let cells = Component::parse(input.clone());
-//         match &cells[0].cell_type {
-//             dashbook_parser::CellType::Markdown => {
-//                 assert_eq!(
-//                     &cells[0].source,
-//                     "# Markdown headline\nSome cool comment\nAnother cool comment\n"
-//                 )
-//             }
-//             _ => panic!(),
-//         }
-//         match &cells[1].cell_type {
-//             dashbook_parser::CellType::Code => {
-//                 assert_eq!(&cells[1].source, "let a = 5;\na * 6\n")
-//             }
-//             _ => panic!(),
-//         }
+    //         let cells = Component::parse(input.clone());
+    //         match &cells[0].cell_type {
+    //             dashbook_parser::CellType::Markdown => {
+    //                 assert_eq!(
+    //                     &cells[0].source,
+    //                     "# Markdown headline\nSome cool comment\nAnother cool comment\n"
+    //                 )
+    //             }
+    //             _ => panic!(),
+    //         }
+    //         match &cells[1].cell_type {
+    //             dashbook_parser::CellType::Code => {
+    //                 assert_eq!(&cells[1].source, "let a = 5;\na * 6\n")
+    //             }
+    //             _ => panic!(),
+    //         }
 
-//         let output = Component::generate(cells);
+    //         let output = Component::generate(cells);
 
-//         assert_eq!(input, output)
-//     }
+    //         assert_eq!(input, output)
+    //     }
 
-//     #[test]
-//     fn test_code_config() {
-//         let input = "/*%%{size: 4}%%*/
-// let a = 5;
-// a * 6
-// "
-//         .to_owned();
+    //     #[test]
+    //     fn test_code_config() {
+    //         let input = "/*%%{size: 4}%%*/
+    // let a = 5;
+    // a * 6
+    // "
+    //         .to_owned();
 
-//         let cells = Component::parse(input.clone());
-//         match &cells[0].cell_type {
-//             dashbook_parser::CellType::Markdown => {
-//                 assert_eq!(
-//                     &cells[0].source,
-//                     "# Markdown headline\nSome cool comment\nAnother cool comment\n"
-//                 )
-//             }
-//             _ => panic!(),
-//         }
-//         match &cells[1].cell_type {
-//             dashbook_parser::CellType::Code => {
-//                 assert_eq!(&cells[1].source, "let a = 5;\na * 6\n")
-//             }
-//             _ => panic!(),
-//         }
+    //         let cells = Component::parse(input.clone());
+    //         match &cells[0].cell_type {
+    //             dashbook_parser::CellType::Markdown => {
+    //                 assert_eq!(
+    //                     &cells[0].source,
+    //                     "# Markdown headline\nSome cool comment\nAnother cool comment\n"
+    //                 )
+    //             }
+    //             _ => panic!(),
+    //         }
+    //         match &cells[1].cell_type {
+    //             dashbook_parser::CellType::Code => {
+    //                 assert_eq!(&cells[1].source, "let a = 5;\na * 6\n")
+    //             }
+    //             _ => panic!(),
+    //         }
 
-//         let output = Component::generate(cells);
+    //         let output = Component::generate(cells);
 
-//         assert_eq!(input, output)
-//     }
+    //         assert_eq!(input, output)
+    //     }
 }

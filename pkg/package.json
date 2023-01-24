@@ -1,6 +1,6 @@
 {
   "name": "@dashbook/dashbook-parser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Parses files in dashbook format",
   "main": "dashbook_parser.js",
   "scripts": {

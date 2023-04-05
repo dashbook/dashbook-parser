@@ -3,7 +3,7 @@ use tokens::Token;
 
 mod tokens;
 
-wit_bindgen_guest_rust::generate!("dashbook-parser");
+wit_bindgen::generate!("dashbook-parser");
 
 export_dashbook_parser!(Component);
 struct Component;

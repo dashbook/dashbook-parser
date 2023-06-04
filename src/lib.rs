@@ -1,3 +1,4 @@
+use exports::dashbook_parser;
 use logos::Logos;
 use tokens::Token;
 
@@ -15,11 +16,14 @@ enum State {
 }
 
 impl dashbook_parser::DashbookParser for Component {
-    fn parse(input: String) -> Vec<dashbook_parser::Cell> {
+    fn parse(input: String) -> Result<Vec<dashbook_parser::Cell>, dashbook_parser::Error> {
         let lexer = Token::lexer(&input);
         let mut output = Vec::new();
-        lexer.fold(State::Code(String::new()), |state, token| {
-            match (state, token) {
+        lexer.fold(Ok(State::Code(String::new())), |state, token| {
+            match (
+                state?,
+                token.map_err(|_| dashbook_parser::Error::ParseError)?,
+            ) {
                 (State::Code(code), Token::BeginComment) => {
                     if !code.is_empty() {
                         output.push(dashbook_parser::Cell {
@@ -29,15 +33,15 @@ impl dashbook_parser::DashbookParser for Component {
                             outputs: Vec::new(),
                         });
                     }
-                    State::Comment(String::new())
+                    Ok(State::Comment(String::new()))
                 }
                 (State::Code(mut code), Token::NonWhitespace(content)) => {
                     code.push_str(content);
-                    State::Code(code)
+                    Ok(State::Code(code))
                 }
                 (State::Code(mut code), Token::Whitespace(content)) => {
                     code.push_str(content);
-                    State::Code(code)
+                    Ok(State::Code(code))
                 }
                 (State::Comment(comment), Token::EndComment) => {
                     output.push(dashbook_parser::Cell {
@@ -46,20 +50,20 @@ impl dashbook_parser::DashbookParser for Component {
                         source: comment,
                         outputs: Vec::new(),
                     });
-                    State::Code(String::new())
+                    Ok(State::Code(String::new()))
                 }
                 (State::Comment(mut comment), Token::NonWhitespace(content)) => {
                     comment.push_str(content);
-                    State::Comment(comment)
+                    Ok(State::Comment(comment))
                 }
                 (State::Comment(mut comment), Token::Whitespace(content)) => {
                     comment.push_str(content);
-                    State::Comment(comment)
+                    Ok(State::Comment(comment))
                 }
-                (state, _) => state,
+                (state, _) => Ok(state),
             }
-        });
-        output
+        })?;
+        Ok(output)
     }
     fn generate(cells: Vec<dashbook_parser::Cell>) -> String {
         cells
@@ -95,7 +99,7 @@ a * 6
 "
         .to_owned();
 
-        let cells = Component::parse(input.clone());
+        let cells = Component::parse(input.clone()).expect("Failed to parse input");
         match &cells[0].cell_type {
             dashbook_parser::CellType::Markdown => {
                 assert_eq!(

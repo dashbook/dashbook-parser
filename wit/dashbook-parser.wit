@@ -1,5 +1,11 @@
-default world dashbook-parser {
+package dashbook:dashbook-parser
+
+world dashbook-parser {
   export dashbook-parser: interface {
+      
+    variant error {
+      parse-error
+    }
 
     record cell {
       cell-type: cell-type,
@@ -19,7 +25,7 @@ default world dashbook-parser {
       html(string)
     }
 
-    parse: func(input: string) -> list<cell>
+    parse: func(input: string) -> result<list<cell>,error>
     generate: func(cells: list<cell>) -> string
   }
 }

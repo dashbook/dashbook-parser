@@ -1,6 +1,7 @@
 use logos::Logos;
 
 #[derive(Logos, Debug, PartialEq)]
+#[logos(skip r"[ \t\n\f]+")]
 pub(crate) enum Token<'a> {
     #[token("/*", priority = 2)]
     BeginComment,
@@ -10,8 +11,4 @@ pub(crate) enum Token<'a> {
     NonWhitespace(&'a str),
     #[token(r"\s*")]
     Whitespace(&'a str),
-
-    #[error]
-    #[regex(r"[ \t\n\f]+", logos::skip)]
-    Error,
 }

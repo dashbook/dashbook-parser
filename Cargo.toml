@@ -10,4 +10,4 @@ crate-type = ['cdylib']
 
 [dependencies]
 logos = "0.13.0"
-wit-bindgen = "0.7.0"
+wit-bindgen = "0.13.1"

@@ -4,9 +4,12 @@ use tokens::Token;
 
 mod tokens;
 
-wit_bindgen::generate!("dashbook-parser");
-
-export_dashbook_parser!(Component);
+wit_bindgen::generate!({
+    world: "dashbook-parser",
+    exports: {
+        "dashbook-parser": Component
+    }
+});
 struct Component;
 
 #[derive(Debug)]
@@ -15,7 +18,7 @@ enum State {
     Code(String),
 }
 
-impl dashbook_parser::DashbookParser for Component {
+impl dashbook_parser::Guest for Component {
     fn parse(input: String) -> Result<Vec<dashbook_parser::Cell>, dashbook_parser::Error> {
         let lexer = Token::lexer(&input);
         let mut output = Vec::new();
@@ -85,7 +88,7 @@ impl dashbook_parser::DashbookParser for Component {
 #[cfg(test)]
 mod tests {
     use crate::{
-        dashbook_parser::{self, DashbookParser},
+        dashbook_parser::{self, Guest},
         Component,
     };
 

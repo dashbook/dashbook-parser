@@ -240,7 +240,7 @@ function generate(arg0) {
 }
 
 const $init = (async() => {
-  const module0 = fetchCompile(new URL('./dashbook_parser.core.wasm', import.meta.url));
+  const module0 = fetchCompile(new URL('./index.core.wasm', import.meta.url));
   const instanceFlags0 = new WebAssembly.Global({ value: "i32", mutable: true }, 3);
   const instanceFlags1 = new WebAssembly.Global({ value: "i32", mutable: true }, 3);
   ({ exports: exports0 } = await instantiateCore(await module0));

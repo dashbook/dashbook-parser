@@ -1,4 +1,4 @@
-package dashbook:dashbook-parser
+package dashbook:dashbook-parser;
 
 world dashbook-parser {
   export dashbook-parser: interface {
@@ -25,7 +25,7 @@ world dashbook-parser {
       html(string)
     }
 
-    parse: func(input: string) -> result<list<cell>,error>
-    generate: func(cells: list<cell>) -> string
+    parse: func(input: string) -> result<list<cell>,error>;
+    generate: func(cells: list<cell>) -> string;
   }
 }

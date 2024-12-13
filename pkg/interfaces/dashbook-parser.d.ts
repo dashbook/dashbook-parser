@@ -1,6 +1,10 @@
 export namespace DashbookParser {
-  export function parse(input: string): Cell[];
-  export function generate(cells: Cell[]): string;
+  export function parse(input: string): Array<Cell>;
+  export function generate(cells: Array<Cell>): string;
+}
+export type Error = ErrorParseError;
+export interface ErrorParseError {
+  tag: 'parse-error',
 }
 export type CellType = CellTypeMarkdown | CellTypeCode | CellTypeQuery;
 export interface CellTypeMarkdown {
@@ -25,9 +29,5 @@ export interface Cell {
   cellType: CellType,
   size: number,
   source: string,
-  outputs: CellOutput[],
-}
-export type Error = ErrorParseError;
-export interface ErrorParseError {
-  tag: 'parse-error',
+  outputs: Array<CellOutput>,
 }

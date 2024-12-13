@@ -6,10 +6,9 @@ mod tokens;
 
 wit_bindgen::generate!({
     world: "dashbook-parser",
-    exports: {
-        "dashbook-parser": Component
-    }
 });
+
+export!(Component);
 struct Component;
 
 #[derive(Debug)]
